@@ -1,6 +1,5 @@
 """Redis cache for real-time data."""
 
-import redis
 import json
 import pickle
 from typing import Any, Optional
@@ -11,12 +10,25 @@ from config.logging_config import get_logger
 
 logger = get_logger(__name__)
 
+# Try to import redis
+try:
+    import redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    logger.warning("redis-py not installed. Caching features will be unavailable.")
+    REDIS_AVAILABLE = False
+
 
 class RedisCache:
     """Redis cache wrapper for real-time data."""
 
     def __init__(self):
         """Initialize Redis connection."""
+        if not REDIS_AVAILABLE:
+            logger.warning("Redis client not available")
+            self.client = None
+            return
+        
         try:
             self.client = redis.from_url(
                 settings.database.redis_url,
